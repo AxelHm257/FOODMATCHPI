@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Paleta FoodMatch */
+    --color-gray-50: #FAF3E6;      /* Fondo principal: Beige claro */
+    --color-gray-200: #E5D5C4;     /* Líneas y bordes: Gris arena */
+    --color-gray-600: #4A2B1A;     /* Texto principal: Marrón chocolate */
+
+    --color-indigo-600: #9E3700;   /* Marca oscuro para navegación */
+    --color-indigo-700: #7F2C00;
+
+    --color-blue-600: #FF6B00;     /* CTA primario: Naranja energético */
+    --color-blue-700: #E65F00;
+
+    --color-yellow-600: #E6A756;   /* Secundario: Naranja melocotón */
+    --color-yellow-700: #D2934A;
+
+    --color-green-600: #4CAF50;    /* Éxito */
+    --color-green-700: #3E8E41;
+
+    --color-red-600: #D84E43;      /* Error */
+    --color-red-700: #B83F37;
+}
+
+/* Overrides sin compilación: definen variables Tailwind v4 directamente */
+:root {
+  --color-gray-50: #FAF3E6;
+  --color-gray-200: #E5D5C4;
+  --color-gray-600: #4A2B1A;
+
+  --color-indigo-600: #9E3700;
+  --color-indigo-700: #7F2C00;
+
+  --color-blue-600: #FF6B00;
+  --color-blue-700: #E65F00;
+
+  --color-yellow-600: #E6A756;
+  --color-yellow-700: #D2934A;
+
+  --color-green-600: #4CAF50;
+  --color-green-700: #3E8E41;
+
+  --color-red-600: #D84E43;
+  --color-red-700: #B83F37;
+}
