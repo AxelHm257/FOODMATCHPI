@@ -12,7 +12,7 @@ use App\Models\UserCart;
 
 class AuthController extends Controller
 {
-    // Método para manejar el registro de nuevos usuarios (rol 'customer' por defecto)
+
     public function register(Request $request)
     {
         if ($request->filled('website')) {
