@@ -75,12 +75,22 @@ class CustomerProductController extends Controller
             $stats = $providerStatsById[$p->id] ?? ['avg' => 0.0, 'count' => 0];
             return [$p->name => ['id' => $p->id, 'avg' => $stats['avg'], 'count' => $stats['count']]];
         });
+        $providerInfoByName = $providers->mapWithKeys(function ($p) {
+            return [$p->name => [
+                'id' => $p->id,
+                'name' => $p->name,
+                'logo_url' => $p->logo_url,
+                'contact' => $p->contact,
+                'location' => $p->location,
+                'description' => $p->description,
+            ]];
+        });
         $ratedIds = ProviderRating::whereIn('provider_id', $providerIds)->where('user_id', Auth::id())->pluck('provider_id')->all();
         $providerRatedByUser = [];
         foreach ($ratedIds as $rid) { $providerRatedByUser[(int)$rid] = true; }
         $deliveries = Order::where('user_id', Auth::id())->latest()->limit(5)->get();
 
-        return view('customer.home', compact('providersWithMenus', 'view', 'currentDay', 'weekDays', 'menuStats', 'deliveries', 'productStatsById', 'providerStatsByName', 'providerRatedByUser', 'productRatedByUser'));
+        return view('customer.home', compact('providersWithMenus', 'view', 'currentDay', 'weekDays', 'menuStats', 'deliveries', 'productStatsById', 'providerStatsByName', 'providerInfoByName', 'providerRatedByUser', 'productRatedByUser'));
     }
 
     public function profile(Request $request, Provider $provider)
@@ -92,8 +102,34 @@ class CustomerProductController extends Controller
             'avg' => $provider->ratings()->count() ? round((float) $provider->ratings()->avg('stars'), 1) : 0.0,
             'count' => (int) $provider->ratings()->count(),
         ];
+        $menuStats = [
+            'count' => (int) $menus->count(),
+            'avg_price' => (float) round((float) $menus->avg('price'), 2),
+            'min_price' => (float) ($menus->min('price') ?? 0),
+            'max_price' => (float) ($menus->max('price') ?? 0),
+        ];
+        $pids = $menus->pluck('id');
+        $productRatings = ProductRating::whereIn('product_id', $pids)->get();
+        $productStatsById = $productRatings->groupBy('product_id')->map(function ($group) {
+            return [
+                'avg' => round((float) $group->avg('stars'), 2),
+                'count' => $group->count(),
+            ];
+        });
         $userHasRated = ProviderRating::where('provider_id', $provider->id)->where('user_id', Auth::id())->exists();
-        return view('customer.provider_profile', compact('provider', 'menus', 'images', 'ratings', 'stats', 'userHasRated'));
+        return view('customer.provider_profile', compact('provider', 'menus', 'images', 'ratings', 'stats', 'menuStats', 'userHasRated', 'productStatsById'));
+    }
+
+    public function show(Product $product)
+    {
+        $provider = $product->provider;
+        $ratings = ProductRating::where('product_id', $product->id)->latest()->limit(20)->get();
+        $stats = [
+            'avg' => ProductRating::where('product_id', $product->id)->count() ? round((float) ProductRating::where('product_id', $product->id)->avg('stars'), 1) : 0.0,
+            'count' => (int) ProductRating::where('product_id', $product->id)->count(),
+        ];
+        $userHasRated = ProductRating::where('product_id', $product->id)->where('user_id', Auth::id())->exists();
+        return view('customer.product_show', compact('product', 'provider', 'ratings', 'stats', 'userHasRated'));
     }
 
     /**

@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
 use App\Mail\PaymentReceiptMail;
 use App\Notifications\OrderStatusNotification;
+use Barryvdh\DomPDF\Facade\Pdf;
 use App\Services\PaymentService;
 
 class CartController extends Controller
@@ -517,7 +518,10 @@ class CartController extends Controller
         if ($order->user_id !== Auth::id()) {
             return redirect()->route('orders.index');
         }
-        return view('emails.payment_receipt', ['order' => $order->load('items')]);
+        Pdf::setOption(['isRemoteEnabled' => true]);
+        $pdf = Pdf::loadView('emails.payment_receipt', ['order' => $order->load('items')])
+            ->setPaper('a4', 'portrait');
+        return $pdf->download('comprobante-pedido-'.$order->id.'.pdf');
     }
 
     public function receiptResend(Order $order)

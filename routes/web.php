@@ -45,6 +45,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/providers/{provider}', [CustomerProductController::class, 'profile'])
         ->name('provider.profile')
         ->middleware('role:customer');
+    Route::get('/products/{product}', [CustomerProductController::class, 'show'])
+        ->name('product.show')
+        ->middleware('role:customer');
 
     // 2. RUTA DEL PROVEEDOR (Requiere rol 'provider')
     Route::get('/provider/dashboard', [ProviderProductController::class, 'index'])
@@ -59,6 +62,8 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->middleware('role:admin')->group(function () {
         Route::get('/users', [AdminController::class, 'usersIndex'])->name('admin.users');
         Route::post('/users/{user}/role', [AdminController::class, 'usersUpdateRole'])->name('admin.users.role');
+        Route::get('/users/{user}/edit', [AdminController::class, 'usersEdit'])->name('admin.users.edit');
+        Route::put('/users/{user}', [AdminController::class, 'usersUpdate'])->name('admin.users.update');
         Route::get('/orders', [AdminController::class, 'ordersIndex'])->name('admin.orders');
         Route::post('/orders/{order}/status', [AdminController::class, 'ordersUpdateStatus'])->name('admin.orders.status');
 

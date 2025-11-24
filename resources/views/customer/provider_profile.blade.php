@@ -15,23 +15,23 @@
     <nav class="mb-6 flex justify-between items-center bg-white p-4 fm-nav rounded-lg shadow-md">
         <div class="flex items-center gap-3">
             @php
-                $files = Storage::disk('public')->files('platform_logo');
-                if (empty($files)) {
-                    $files = Storage::disk('public')->files('provider_logos');
-                    $preferred = array_values(array_filter($files, function($f){ return preg_match('/foodmatch/i', basename($f)); }));
-                    if(count($preferred)) { $files = $preferred; }
+                $navFiles = Storage::disk('public')->files('platform_logo');
+                if (empty($navFiles)) {
+                    $navFiles = Storage::disk('public')->files('provider_logos');
+                    $navPreferred = array_values(array_filter($navFiles, function($f){ return preg_match('/foodmatch/i', basename($f)); }));
+                    if(count($navPreferred)) { $navFiles = $navPreferred; }
                 }
-                $images = array_values(array_filter($files, function($f){ return preg_match('/\.(png|jpg|jpeg|webp)$/i', $f); }));
-                $logo = null;
-                if(count($images)){
-                    usort($images, function($a,$b){ return Storage::disk('public')->lastModified($a) <=> Storage::disk('public')->lastModified($b); });
-                    $logo = end($images);
+                $navImages = array_values(array_filter($navFiles, function($f){ return preg_match('/\.(png|jpg|jpeg|webp)$/i', $f); }));
+                $navLogo = null;
+                if(count($navImages)){
+                    usort($navImages, function($a,$b){ return Storage::disk('public')->lastModified($a) <=> Storage::disk('public')->lastModified($b); });
+                    $navLogo = end($navImages);
                 }
-                $logoUrl = $logo ? asset('storage/'.$logo) : null;
+                $navLogoUrl = $navLogo ? asset('storage/'.$navLogo) : null;
             @endphp
-            @if($logoUrl)
+            @if($navLogoUrl)
                 <a href="{{ route('customer.home') }}" class="inline-flex items-center">
-                    <img src="{{ $logoUrl }}" alt="Logo" class="fm-nav-logo" />
+                    <img src="{{ $navLogoUrl }}" alt="Logo" class="fm-nav-logo" />
                 </a>
             @endif
             <a href="{{ route('customer.home') }}" class="px-3 py-2 border border-indigo-600 text-indigo-700 rounded hover:bg-indigo-50">Inicio</a>
@@ -56,7 +56,19 @@
                 <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
                     <div><span class="font-semibold">Contacto:</span> {{ $provider->contact ?? '—' }}</div>
                     <div><span class="font-semibold">Ubicación:</span> {{ $provider->location ?? '—' }}</div>
-                    <div><span class="font-semibold">Coordenadas:</span> {{ $provider->lat && $provider->lng ? ($provider->lat.', '.$provider->lng) : '—' }}</div>
+                    <div>
+                        <span class="font-semibold">Coordenadas:</span>
+                        @if ($provider->lat && $provider->lng)
+                            <a href="https://www.google.com/maps/search/?api=1&query={{ $provider->lat }},{{ $provider->lng }}" target="_blank" class="underline text-indigo-700">{{ $provider->lat }}, {{ $provider->lng }}</a>
+                        @else
+                            —
+                        @endif
+                    </div>
+                </div>
+                <div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                    <div><span class="font-semibold">Productos:</span> {{ $menuStats['count'] }}</div>
+                    <div><span class="font-semibold">Precio promedio:</span> ${{ number_format($menuStats['avg_price'], 2) }}</div>
+                    <div><span class="font-semibold">Rango de precios:</span> ${{ number_format($menuStats['min_price'], 2) }} – ${{ number_format($menuStats['max_price'], 2) }}</div>
                 </div>
                 @if (empty($userHasRated))
                     <form method="POST" action="{{ route('ratings.provider', $provider->id) }}" class="flex flex-col sm:flex-row sm:items-center gap-2 mt-4">
@@ -104,7 +116,18 @@
                                 <div class="flex-1">
                                     <div class="font-semibold">{{ $menu->name }}</div>
                                     <div class="text-sm text-gray-500">${{ number_format($menu->price, 2) }}</div>
+                                    @php($ps = $productStatsById[$menu->id] ?? ['avg'=>0,'count'=>0])
+                                    <div class="text-xs text-gray-600 mt-1">{{ number_format((float)$ps['avg'],1) }}⭐ ({{ (int)$ps['count'] }})</div>
                                 </div>
+                            </div>
+                            <div class="mt-3 text-sm text-gray-700 hidden" id="details-{{ $menu->id }}">
+                                <div><span class="font-semibold">Descripción:</span> {{ $menu->description ?: '—' }}</div>
+                                <div><span class="font-semibold">Categoría:</span> {{ $menu->category ?? '—' }}</div>
+                                <div><span class="font-semibold">Disponible:</span> {{ $menu->is_available ? 'Sí' : 'No' }}</div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="px-3 py-1 border border-indigo-600 text-indigo-700 rounded hover:bg-indigo-50" onclick="(function(){var el=document.getElementById('details-{{ $menu->id }}'); if(el){ el.classList.toggle('hidden'); } })()">Ver detalles</button>
+                                <a href="{{ route('product.show', $menu->id) }}" class="ml-2 px-3 py-1 border border-indigo-600 text-indigo-700 rounded hover:bg-indigo-50">Ver producto</a>
                             </div>
                         </div>
                     @endforeach

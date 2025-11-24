@@ -52,8 +52,8 @@
             <div class="mb-6 rounded-md bg-red-50 border border-red-200 p-3 text-red-700">{{ session('error') }}</div>
         <?php endif; ?>
 
-        <h2 class="text-3xl font-bold text-gray-800 mb-4 flex items-center">
-            <span class="mr-3">🍽️</span> Explora los Productos Disponibles
+        <h2 class="text-3xl font-bold text-gray-800 mb-4">
+            Explora los Productos Disponibles
         </h2>
         <div class="mb-8 flex items-center gap-2">
             @php $v = in_array(($view ?? 'cards'), ['cards','list']) ? $view : 'cards'; @endphp
@@ -67,7 +67,11 @@
             @forelse ($providersWithMenus as $providerName => $menus)
                 <div class="bg-white shadow-xl rounded-xl p-6 sm:p-8 mb-12 border-t-6 border-indigo-600">
                     <h3 class="text-3xl font-bold text-gray-900 mb-2 flex items-center">
-                        <span class="mr-3 text-indigo-600">🏪</span> <a href="{{ route('provider.profile', $providerStatsByName[$providerName]['id'] ?? null) }}" class="hover:underline">{{ $providerName }}</a>
+                        @php $pi = ($providerInfoByName[$providerName] ?? null); @endphp
+                        @if($pi && !empty($pi['logo_url']))
+                            <img src="{{ $pi['logo_url'] }}" alt="Logo" class="w-10 h-10 rounded-full object-cover border mr-3" />
+                        @endif
+                        <a href="{{ route('provider.profile', $providerStatsByName[$providerName]['id'] ?? null) }}" class="hover:underline">{{ $providerName }}</a>
                         @php $ps = ($providerStatsByName[$providerName] ?? null); @endphp
                         @if($ps)
                             <span class="ml-3 text-sm text-gray-600">{{ number_format((float)($ps['avg'] ?? 0), 1) }}⭐ ({{ (int)($ps['count'] ?? 0) }})</span>
@@ -91,9 +95,14 @@
                     @elseif($providerId)
                         <div class="mb-4 text-sm text-gray-600">Ya calificaste a este proveedor.</div>
                     @endif
-                    <p class="text-gray-600 mb-8 border-b pb-4">
-                        Menú completo disponible para ordenar. ¡Encuentra tu próximo antojo!
-                    </p>
+                    @if($pi && !empty($pi['description']))
+                        <p class="text-gray-700 mb-2">{{ $pi['description'] }}</p>
+                    @endif
+                    <div class="text-sm text-gray-700 grid grid-cols-1 md:grid-cols-3 gap-2 mb-8 border-b pb-4">
+                        <div><span class="font-semibold">Contacto:</span> {{ $pi['contact'] ?? '—' }}</div>
+                        <div><span class="font-semibold">Ubicación:</span> {{ $pi['location'] ?? '—' }}</div>
+                        <div><span class="font-semibold">Logo:</span> {{ (!empty($pi['logo_url'])) ? 'Disponible' : '—' }}</div>
+                    </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                         @foreach ($menus as $menu)
@@ -105,7 +114,7 @@
                                             ? $img
                                             : ($img ? asset($img) : ('https://via.placeholder.com/400x250?text=Platillo+' . urlencode($menu->name)));
                                     @endphp
-                                    <img src="{{ $src }}" alt="Imagen de {{ $menu->name }}" class="w-full h-40 object-cover">
+                                    <a href="{{ route('product.show', $menu->id) }}"><img src="{{ $src }}" alt="Imagen de {{ $menu->name }}" class="w-full h-40 object-cover"></a>
                                 </div>
                                 <div class="flex-grow">
                                     <h4 class="text-xl font-bold text-gray-800 mb-1">{{ $menu->name }}</h4>
@@ -117,6 +126,7 @@
                                         @csrf
                                         <button class="w-full bg-indigo-600 text-white font-semibold py-3 rounded-lg hover:bg-indigo-700 transition">🛒 Añadir al carrito</button>
                                     </form>
+                                    <a href="{{ route('product.show', $menu->id) }}" class="w-full inline-block text-center px-3 py-2 border border-indigo-600 text-indigo-700 rounded hover:bg-indigo-50">Ver producto</a>
                                     @php $ps = ($productStatsById[$menu->id] ?? null); @endphp
                                     <div class="text-sm text-gray-600">{{ $ps ? number_format((float)$ps['avg'],1) : '0.0' }}⭐ ({{ $ps['count'] ?? 0 }})</div>
                                     @if (empty($productRatedByUser[$menu->id]))
@@ -169,7 +179,13 @@
                             @foreach ($providersWithMenus as $providerName => $menus)
                                 @foreach ($menus as $menu)
                                     <tr>
-                                        <td class="px-4 py-2">{{ $providerName }}</td>
+                                        <td class="px-4 py-2">
+                                            @php $pi = ($providerInfoByName[$providerName] ?? null); @endphp
+                                            @if($pi && !empty($pi['logo_url']))
+                                                <img src="{{ $pi['logo_url'] }}" alt="Logo" class="fm-provider-logo-list border mr-2 align-middle" />
+                                            @endif
+                                            <span class="align-middle">{{ $providerName }}</span>
+                                        </td>
                                         <td class="px-4 py-2">{{ $menu->name }}</td>
                                         <td class="px-4 py-2">${{ number_format($menu->price, 2) }}</td>
                                         <td class="px-4 py-2">

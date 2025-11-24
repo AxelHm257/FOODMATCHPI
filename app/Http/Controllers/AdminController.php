@@ -17,8 +17,13 @@ class AdminController extends Controller
 {
     public function usersIndex(Request $request)
     {
-        $users = User::orderBy('id', 'asc')->get();
-        return view('admin.users', compact('users'));
+        $role = $request->query('role');
+        $query = User::orderBy('id', 'asc');
+        if ($role && in_array($role, ['customer','provider','admin'], true)) {
+            $query->where('role', $role);
+        }
+        $users = $query->get();
+        return view('admin.users', compact('users', 'role'));
     }
 
     public function usersUpdateRole(Request $request, User $user)
@@ -42,6 +47,48 @@ class AdminController extends Controller
             ]);
         }
         return redirect()->route('admin.users')->with('success', 'Rol actualizado');
+    }
+
+    public function usersEdit(Request $request, User $user)
+    {
+        if (!$request->user() || $request->user()->role !== 'admin') {
+            abort(403);
+        }
+        return view('admin.users_form', [
+            'user' => $user,
+            'action' => route('admin.users.update', $user),
+            'method' => 'PUT',
+            'title' => 'Editar usuario',
+        ]);
+    }
+
+    public function usersUpdate(Request $request, User $user)
+    {
+        if (!$request->user() || $request->user()->role !== 'admin') {
+            abort(403);
+        }
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,'.$user->id,
+            'role' => 'required|string|in:customer,provider,admin',
+        ]);
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        $user->role = $request->input('role');
+        $user->save();
+
+        if ($user->role === 'provider' && !$user->provider) {
+            Provider::create([
+                'user_id' => $user->id,
+                'name' => $user->name,
+                'contact' => $user->email,
+                'logo_url' => null,
+                'location' => '',
+                'description' => '',
+            ]);
+        }
+
+        return redirect()->route('admin.users')->with('success', 'Usuario actualizado');
     }
 
     public function ordersIndex(Request $request)
